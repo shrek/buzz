@@ -14,7 +14,8 @@ int waitingClientPort;
 Link linkParser(char *linksLineStr){
 	char *a[3];
 	int n=0, i;
- 
+
+	printf("%s\n",linksLineStr);
 	a[n]=strtok(linksLineStr, "\t");
 
 	while(a[n] && (n<4))
@@ -100,6 +101,7 @@ locatedPacket packetParser(char* pktStr){
 	return pkt;
 }
 
+/*
 locatedPacket bohateiIPSProc(int bohateiIPSIndex, locatedPacket inPkt){
 	//first we set the outpacket to be the same as in packet
 	locatedPacket outPkt;
@@ -132,6 +134,7 @@ locatedPacket bohateiIPSProc(int bohateiIPSIndex, locatedPacket inPkt){
 		// print error
 	}
 }
+*/
 
 locatedPacket ipsProc(int ipsIndex, locatedPacket inPkt){
 	//first we set the outpacket to be the same as in packet
@@ -546,15 +549,16 @@ locatedPacket swProc(locatedPacket inPkt){
 }
 
 void showLocatedPacket(locatedPacket pkt){
-	printf("&&& pkt id:%d, srcIP:%d, dstIP:%d tag:%d, dropped:%d, @port:%d\n", pkt.packet.id, pkt.packet.srcIP, pkt.packet.dstIP, pkt.packet.tag, pkt.packet.dropped, pkt.port.num);
+  //printf("&&& pkt id:%d, srcIP:%d, dstIP:%d tag:%d, dropped:%d, @port:%d\n", pkt.packet.id, pkt.packet.srcIP, pkt.packet.dstIP, pkt.packet.tag, pkt.packet.dropped, pkt.port.num);
+  printf("&&& pkt id:%d, srcIP:xxx, dstIP:%d tag:%d, dropped:%d, @port:%d\n", pkt.packet.id, pkt.packet.dstIP, pkt.packet.tag, pkt.packet.dropped, pkt.port.num);  
 }
 
 int main(int argc, char *argv[]){
 
 	// FILE *trafficFile = fopen("./testTraffic.dat","r");
-    FILE *nodesFile = fopen("nodes.dat","r");
-    FILE *linksFile = fopen("links.dat","r");
-    FILE *forwardingTablesFile = fopen("forwardingTables.dat","r");
+    FILE *nodesFile = fopen("nodes1.dat","r");
+    FILE *linksFile = fopen("links1.dat","r");
+    FILE *forwardingTablesFile = fopen("forwardingTables1.dat","r");
 
 /*
 	if (trafficFile == 0){
@@ -564,18 +568,24 @@ int main(int argc, char *argv[]){
 */
 
 	if (nodesFile == 0){
-		printf("Could not open links file\n");
+		printf("Could not open nodes file\n");
 		return 1;
+	} else {
+		printf("Opened nodes file\n");	  
 	}
 
 	if (linksFile == 0){
 		printf("Could not open links file\n");
 		return 1;
+	} else {
+		printf("Opened links file\n");	  	  
 	}
 
 	if (forwardingTablesFile == 0){
-		printf("Could not open links file\n");
+		printf("Could not open FT file\n");
 		return 1;
+	} else {
+		printf("Opened FT file\n");	  
 	}
 
 	int i;
@@ -669,7 +679,7 @@ int main(int argc, char *argv[]){
 		portInfo[node.port.num].index = node.index;
 		portInfo[node.port.num].port.num = node.port.num;
 
-//		printf("%s\n", node.type);
+		printf("%s\n", node.type);
 
 		if (node.type[0] == 'f')
 			fwPorts[noOfFws++] = node.port.num;
@@ -683,11 +693,11 @@ int main(int argc, char *argv[]){
 			swPorts[node.index][swPortsSeen[node.index]++] = node.port.num;
 			if (node.index >= noOfSws)
 				noOfSws = node.index + 1;
-//			printf("DEBUG: %d\n", node.index);
+			printf("DEBUG: %d\n", node.index);
 		}
 	}
 
-/*
+	/*
 	printf("ips ports:\n");
 	for (i=0; i<noOfIPSes; i++)
 		printf("%d\n", ipsInfo[i]);
@@ -714,7 +724,7 @@ int main(int argc, char *argv[]){
 		printf("%d %d %s\n",portInfo[i].index, portInfo[i].port.num, portInfo[i].type);
 	}
 	printf("*********done printing port info*********\n");
-*/
+	*/
 
 	//Reading the forwarding tables file************************************************
 	int k;
@@ -735,7 +745,7 @@ int main(int argc, char *argv[]){
 		forwardingTablesParser(forwardingTablesFileLineStr);
 	}
 
-/*
+
 	printf("!!!!forwarding tables!!!!\n");
 	for (i=0; i< MAX_NO_OF_NETWIDE_PORTS; i++)
 		for (j=0; j< MAX_NO_OF_NODES; j++)
@@ -744,7 +754,7 @@ int main(int argc, char *argv[]){
 					if (nextHop[i][j][k][l] >= 0)
 						printf("inport:%d, srcIP:%d, dstIP:%d, tag:%d:::outport%d\n",i,j,k,l,nextHop[i][j][k][l]);
 	printf("!!!!end of forwarding tables!!!!\n");
-*/
+
 	//this is a test to see if an injected packet can follow through the topology
 	int injectionPortNo = 0;
 /*
@@ -814,8 +824,8 @@ int main(int argc, char *argv[]){
 
 	locatedPacket pkt1;
 	pkt1.packet.id = 1;
-	pkt1.packet.srcIP = 0;
-//	pkt1.packet.dstIP = 2;
+	//pkt1.packet.srcIP = 1;
+	pkt1.packet.dstIP = 2;
 	pkt1.packet.dropped = 0;
 	pkt1.packet.tag = 0;
 	pkt1.packet.isHttp = 0;
@@ -862,25 +872,27 @@ int main(int argc, char *argv[]){
 	IP dstIP_of_pkt3;
 	IP dstIP_of_pkt4;
 
-	klee_make_symbolic(&syn_of_pkt1, sizeof(syn_of_pkt1), "pkt1.packet.tcpSYN");
-	klee_make_symbolic(&syn_of_pkt2, sizeof(syn_of_pkt2), "pkt2.packet.tcpSYN");
-	klee_make_symbolic(&syn_of_pkt3, sizeof(syn_of_pkt3), "pkt3.packet.tcpSYN");
-	klee_make_symbolic(&syn_of_pkt4, sizeof(syn_of_pkt4), "pkt4.packet.tcpSYN");
+	IP srcIP_of_pkt1;	
+
+	//klee_make_symbolic(&syn_of_pkt1, sizeof(syn_of_pkt1), "pkt1.packet.tcpSYN");
+	//klee_make_symbolic(&syn_of_pkt2, sizeof(syn_of_pkt2), "pkt2.packet.tcpSYN");
+	//klee_make_symbolic(&syn_of_pkt3, sizeof(syn_of_pkt3), "pkt3.packet.tcpSYN");
+	//klee_make_symbolic(&syn_of_pkt4, sizeof(syn_of_pkt4), "pkt4.packet.tcpSYN");
 	
-	klee_make_symbolic(&dstIP_of_pkt1, sizeof(dstIP_of_pkt1), "pkt1.packet.dstIP");
-	klee_make_symbolic(&dstIP_of_pkt2, sizeof(dstIP_of_pkt2), "pkt2.packet.dstIP");
-	klee_make_symbolic(&dstIP_of_pkt3, sizeof(dstIP_of_pkt3), "pkt3.packet.dstIP");
-	klee_make_symbolic(&dstIP_of_pkt4, sizeof(dstIP_of_pkt4), "pkt4.packet.dstIP");
+	klee_make_symbolic(&srcIP_of_pkt1, sizeof(srcIP_of_pkt1), "pkt1.packet.srcIP");
+	//klee_make_symbolic(&dstIP_of_pkt2, sizeof(dstIP_of_pkt2), "pkt2.packet.dstIP");
+	//klee_make_symbolic(&dstIP_of_pkt3, sizeof(dstIP_of_pkt3), "pkt3.packet.dstIP");
+	//klee_make_symbolic(&dstIP_of_pkt4, sizeof(dstIP_of_pkt4), "pkt4.packet.dstIP");
 	
-	memcpy(&pkt1.packet.dstIP, &dstIP_of_pkt1, sizeof(IP));
-	memcpy(&pkt2.packet.dstIP, &dstIP_of_pkt2, sizeof(IP));
-	memcpy(&pkt3.packet.dstIP, &dstIP_of_pkt3, sizeof(IP));
-	memcpy(&pkt4.packet.dstIP, &dstIP_of_pkt4, sizeof(IP));
+	memcpy(&pkt1.packet.srcIP, &srcIP_of_pkt1, sizeof(IP));
+	//memcpy(&pkt2.packet.dstIP, &dstIP_of_pkt2, sizeof(IP));
+	//memcpy(&pkt3.packet.dstIP, &dstIP_of_pkt3, sizeof(IP));
+	//memcpy(&pkt4.packet.dstIP, &dstIP_of_pkt4, sizeof(IP));
 	
 //	klee_assert(pkt1.packet.tcpSYN != 7);
 
 	//make it happen with at most 4 packets
-	for (zz=0; zz<4;zz++)
+	for (zz=0; zz<1;zz++)
 	{
 		locatedPacket pkt;
 		if (zz==0)
@@ -892,8 +904,8 @@ int main(int argc, char *argv[]){
 		if (zz==3)
 			pkt = pkt4;
 		
-//		printf("got a packet with ID %d\n", pkt.packet.id);
-//		showLocatedPacket(pkt);
+		printf("got a packet with ID %d\n", pkt.packet.id);
+		showLocatedPacket(pkt);
 
 
 		//move the packet until it arrives its destination or gets dropped
@@ -901,37 +913,37 @@ int main(int argc, char *argv[]){
 			//forward pkt on the link
 			pkt.port.num = linksPort[pkt.port.num];
 			
-//			showLocatedPacket(pkt);
-//			printf("packet ID %d got forwarded by a link\n\n", pkt.packet.id);
+			showLocatedPacket(pkt);
+			printf("packet ID %d got forwarded by a link\n\n", pkt.packet.id);
 
 			if (portInfo[pkt.port.num].type[0] == 'f'){
 				pkt = firewallProc(portInfo[pkt.port.num].index, pkt);
-//				showLocatedPacket(pkt);
-//				printf("packet ID %d got processed by a firewall\n", pkt.packet.id);
+				showLocatedPacket(pkt);
+				printf("packet ID %d got processed by a firewall\n", pkt.packet.id);
 			}
 
 			if (portInfo[pkt.port.num].type[0] == 'i'){
 				pkt = ipsProc(portInfo[pkt.port.num].index, pkt);
-//				showLocatedPacket(pkt);
-//				printf("packet ID %d got processed by an ips\n", pkt.packet.id);
+				showLocatedPacket(pkt);
+				printf("packet ID %d got processed by an ips\n", pkt.packet.id);
 			}
 
 			if (portInfo[pkt.port.num].type[0] == 'p'){
 				pkt = proxyProc(portInfo[pkt.port.num].index, pkt);
-//				showLocatedPacket(pkt);
-//				printf("packet ID %d got processed by a proxy\n", pkt.packet.id);
+				showLocatedPacket(pkt);
+				printf("packet ID %d got processed by a proxy\n", pkt.packet.id);
 			}
 
 			if (portInfo[pkt.port.num].type[0] == 's'){
 				pkt = swProc(pkt);
-//				showLocatedPacket(pkt);
-//				printf("packet ID %d got processed by a switch\n", pkt.packet.id);
+				showLocatedPacket(pkt);
+				printf("packet ID %d got processed by a switch\n", pkt.packet.id);
 			}
 			
-//			printf("proxy state: ");
-//			showProxyState(0, 0, 1, 1);
-//			printf("ips state: ");
-//			showIpsState(0, 0);
+			printf("proxy state: ");
+			showProxyState(0, 0, 1, 1);
+			printf("ips state: ");
+			showIpsState(0, 0);
 
 
 			printf("\n");
