@@ -109,7 +109,7 @@ locatedPacket firewallProc(int fwIndex, locatedPacket inPkt){
 
 	outPkt.port.num = fwPorts[fwIndex];
 
-	if (((inPkt.packet.dstIP == 1) || (inPkt.packet.dstIP == 0)) && inPkt.packet.dstPort == 22) {
+	if (((inPkt.packet.dstIP == 1) || (inPkt.packet.dstIP == 0) || (inPkt.packet.dstIP == 2)) && inPkt.packet.dstPort == 22) {
 	  printf("dropping packet to: %d\n", inPkt.packet.dstIP);
 	  outPkt.packet.dropped = 1;
 	  return outPkt;
@@ -325,22 +325,33 @@ int main(int argc, char *argv[]){
 	pkt1.packet.isHttp = 0;
 	pkt1.packet.timeout = 0;
 	pkt1.packet.dstPort = 22;
-	pkt1.port.num = 11;
+	//pkt1.port.num = 11;
 	
 
 
-	//int dstPort_of_pkt1;
+	//int srcPort_of_pkt1;
 	
 	//klee_make_symbolic(&dstPort_of_pkt1, sizeof(dstPort_of_pkt1), "pkt1.packet.dstPort");
 	//memcpy(&pkt1.packet.dstPort, &dstPort_of_pkt1, sizeof(dstPort_of_pkt1));
 
+	int srcPort_of_pkt1;
 	int dstIP_of_pkt1;
 	
 	klee_make_symbolic(&dstIP_of_pkt1, sizeof(dstIP_of_pkt1), "pkt1.packet.dstIP");
 	memcpy(&pkt1.packet.dstIP, &dstIP_of_pkt1, sizeof(dstIP_of_pkt1));
+
+	klee_make_symbolic(&srcPort_of_pkt1, sizeof(srcPort_of_pkt1), "pkt1.packet.srcPort");
+	memcpy(&pkt1.port.num, &srcPort_of_pkt1, sizeof(srcPort_of_pkt1));
 	
-	klee_assume(0 <= dstIP_of_pkt1);
-	klee_assume(dstIP_of_pkt1 <= 2);
+	
+	klee_assume( ((0 <= dstIP_of_pkt1) & (dstIP_of_pkt1 <= 3)) == 1  ) ;
+
+	klee_assume(  (((0 <= srcPort_of_pkt1) & (srcPort_of_pkt1 <= 2)) | (srcPort_of_pkt1 == 11)) == 1 ) ;	  
+
+	klee_assume( ((srcPort_of_pkt1==11) & (dstIP_of_pkt1 == 3)) == 0);
+
+	klee_assume( (srcPort_of_pkt1 != dstIP_of_pkt1) == 1);	
+	
 
 	//make it happen with at most 4 packets
 	for (zz=0; zz<1;zz++)
